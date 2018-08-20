@@ -1,17 +1,11 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import shallowEqualArrays from 'shallow-equal/arrays';
-import Autowhatever from 'react-autowhatever-ie11-compatible';
+import Autowhatever from 'react-autowhatever';
 import { defaultTheme, mapToAutowhateverTheme } from './theme';
 
 const alwaysTrue = () => true;
-const defaultShouldRenderSuggestions = value => {
-  if (value === undefined) {
-    return false;
-  } else {
-    return value.trim().length > 0;
-  }
-};
+const defaultShouldRenderSuggestions = value => value.trim().length > 0;
 const defaultRenderSuggestionsContainer = ({ containerProps, children }) => (
   <div {...containerProps}>{children}</div>
 );
@@ -49,9 +43,9 @@ export default class Autosuggest extends Component {
     inputProps: (props, propName) => {
       const inputProps = props[propName];
 
-      // if (!inputProps.hasOwnProperty('value')) {
-      //   throw new Error("'inputProps' must have 'value'.");
-      // }
+      if (!inputProps.hasOwnProperty('value')) {
+        throw new Error("'inputProps' must have 'value'.");
+      }
 
       if (!inputProps.hasOwnProperty('onChange')) {
         throw new Error("'inputProps' must have 'onChange'.");
@@ -316,20 +310,16 @@ export default class Autosuggest extends Component {
   }
 
   maybeCallOnChange(event, newValue, method) {
-    const { onChange } = this.props.inputProps;
-
-    const { value } = this.input;
+    const { value, onChange } = this.props.inputProps;
 
     if (newValue !== value) {
-      this.input.value = newValue;
       onChange(event, { newValue, method });
     }
   }
 
   willRenderSuggestions(props) {
-    const { suggestions, shouldRenderSuggestions } = props;
-
-    const { value } = this.input ? this.input : {};
+    const { suggestions, inputProps, shouldRenderSuggestions } = props;
+    const { value } = inputProps;
 
     return suggestions.length > 0 && shouldRenderSuggestions(value);
   }
@@ -454,13 +444,11 @@ export default class Autosuggest extends Component {
   };
 
   getQuery() {
-    // const { inputProps } = this.props;
-    // const { value } = inputProps;
+    const { inputProps } = this.props;
+    const { value } = inputProps;
     const { valueBeforeUpDown } = this.state;
 
-    if (this.input && this.input.value) return this.input.value.trim();
-    else if (valueBeforeUpDown) return valueBeforeUpDown.trim();
-    else return '';
+    return (valueBeforeUpDown === null ? value : valueBeforeUpDown).trim();
   }
 
   renderSuggestionsContainer = ({ containerProps, children }) => {
@@ -499,10 +487,7 @@ export default class Autosuggest extends Component {
     const shouldRenderSuggestions = alwaysRenderSuggestions
       ? alwaysTrue
       : this.props.shouldRenderSuggestions;
-    const { onFocus, onKeyDown, defaultValue } = inputProps;
-
-    const value = this.input ? this.input.value : defaultValue;
-
+    const { value, onFocus, onKeyDown } = inputProps;
     const willRenderSuggestions = this.willRenderSuggestions(this.props);
     const isOpen =
       alwaysRenderSuggestions ||
@@ -552,10 +537,10 @@ export default class Autosuggest extends Component {
           ...(highlightFirstSuggestion
             ? {}
             : {
-                highlightedSectionIndex: null,
-                highlightedSuggestionIndex: null,
-                highlightedSuggestion: null
-              }),
+              highlightedSectionIndex: null,
+              highlightedSuggestionIndex: null,
+              highlightedSuggestion: null
+            }),
           valueBeforeUpDown: null,
           isCollapsed: !shouldRender
         });
